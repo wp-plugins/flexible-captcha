@@ -1,0 +1,35 @@
+=== Flexible Captcha ===
+Contributors: foomagoo
+Donate link: 
+Tags: Flexible Captcha
+Requires at least: 3.1
+Tested up to: 3.4.1
+Stable tag: 0.1
+
+This plugin allows you to create image captcha for any form.  It can be placed on any page with a shortcode or automatically included on the comment and registration forms.  It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
+
+== Description ==
+
+This plugin allows you to create image captcha for any form.  It can be placed on any page with a shortcode or automatically included on the comment and registration forms.  It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
+
+== Installation ==
+
+1. Extract the downloaded Zip file.
+2. Upload the 'flexible-captcha' directory to the `/wp-content/plugins/` directory
+3. Activate the plugin through the 'Plugins' menu in WordPress
+
+== Frequently Asked Questions ==
+
+== Screenshots ==
+
+1. Plugin admin page example.
+2. Contact Form 7 Form Example.
+3. Comment Form Example.
+4. Registartion Page Example.
+
+== Changelog ==
+
+= 0.1 =
+Initial version.
+
+== Upgrade Notice ==
