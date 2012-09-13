@@ -3,7 +3,7 @@
 Plugin Name: Flexible Captcha
 Plugin URI: http://www.jsterup.com
 Description: A plugin to create configurable captcha images on any form.
-Version: 0.1
+Version: 0.2
 Author: Jeff Sterup
 Author URI: http://www.jsterup.com
 License: GPL2
@@ -30,7 +30,7 @@ add_action('wp_ajax_FC_delete_font_file',  array($FlexibleCaptcha, 'delete_font_
 add_action('wp_ajax_FC_submit_general_settings',  array($FlexibleCaptcha, 'submit_general_settings'));
 
 ##Comments form
-add_action( 'comment_form', array($FlexibleCaptcha, 'add_to_comment_form'));
+add_action( 'comment_form_after_fields', array($FlexibleCaptcha, 'add_to_comment_form'));
 add_filter( 'preprocess_comment', array($FlexibleCaptcha, 'check_comment_submit'));
 
 ##Registration form

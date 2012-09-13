@@ -1,6 +1,13 @@
 <script type="text/javascript" language="javascript">
+	var loadingImg = new Image();
+	loadingImg.src='<?php print $this->urlPath; ?>/images/ajax-loader.gif';
 	function FC_regenerate_captcha() {
+		var dims = new Array(jQuery('#FC_captcha_image').attr('width'), jQuery('#FC_captcha_image').attr('height'));
+		jQuery('#FC_captcha_image').css('width', dims[0]);
+		jQuery('#FC_captcha_image').css('height', dims[1]);
+		jQuery('#FC_captcha_image').attr('src', loadingImg.src);
 		jQuery('#FC_captcha_image').attr('src', '<?php print home_url(); ?>?FC_captcha_request=<?php print $requestKey; ?>&rs='+new Date().getTime()+'&cwidth=<?php print $width; ?>&cheight=<?php print $height; ?>');
+		
 	}
 	jQuery(function() {
 		jQuery('#FC_image_refresh').click(function(e) {
