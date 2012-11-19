@@ -3,7 +3,7 @@
 Plugin Name: Flexible Captcha
 Plugin URI: http://www.jsterup.com
 Description: A plugin to create configurable captcha images on any form.
-Version: 0.2
+Version: 0.3
 Author: Jeff Sterup
 Author URI: http://www.jsterup.com
 License: GPL2

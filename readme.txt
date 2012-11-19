@@ -4,7 +4,7 @@ Donate link:
 Tags: Flexible Captcha
 Requires at least: 3.1
 Tested up to: 3.4.2
-Stable tag: 0.2
+Stable tag: 0.3
 
 This plugin allows you to create image captcha for any form.  It can be placed on any page with a shortcode or automatically included on the comment and registration forms.  It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
 
@@ -33,6 +33,10 @@ A. [FC_captcha_fields]
 
 == Changelog ==
 
+= 0.3 =
+Fixed problem with replying to comments on the dashboard.
+Removed PHP notice when checking for captcha request.
+
 = 0.2 =
 Changed hook to place field on comment form to after fields.
 Changed ajax loader image.
@@ -42,3 +46,15 @@ Modified javascript to regenerate captcha image.  Added ajax loader image.
 Initial version.
 
 == Upgrade Notice ==
+
+= 0.3 =
+Fixed problem with replying to comments on the dashboard.
+Removed PHP notice when checking for captcha request.
+
+= 0.2 =
+Changed hook to place field on comment form to after fields.
+Changed ajax loader image.
+Modified javascript to regenerate captcha image.  Added ajax loader image.
+
+= 0.1 =
+Initial version.

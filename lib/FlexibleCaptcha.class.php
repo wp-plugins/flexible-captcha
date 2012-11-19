@@ -206,7 +206,7 @@ class FlexibleCaptcha {
 	
 	function check_for_captcha_request($wp_query) {
 		$requestKey = $this->get_request_key();
-		if ($_GET['FC_captcha_request'] == $requestKey) {
+		if (isset($_GET['FC_captcha_request']) && $_GET['FC_captcha_request'] == $requestKey) {
 			##Set width
 			if (is_numeric($_GET['cwidth']) && $_GET['cwidth'] < 1000 && $_GET['cwidth'] >= 100) {
 				$width = $_GET['cwidth'];
@@ -253,12 +253,16 @@ class FlexibleCaptcha {
 		header("Content-type: image/png");
 		@imagepng($this->image);
 		@imagedestroy($this->image);
+		$this->purge_captcha();
 		exit;
 	}
 
 	public function gen_string() {
 		global $wpdb;
-		#session_start();
+		if (array_key_exists('FC_captcha_key', $_COOKIE)) {
+			#$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+			#$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
+		}
 		$count=0;
 		$this->string="";
 		$fontColor = get_option('FC_font_color');
@@ -356,7 +360,9 @@ class FlexibleCaptcha {
 	function check_captcha_val() {
 		global $wpdb;
 		$caseSensitive = get_option('FC_case_sensitive');
-		if (array_key_exists('FC_captcha_key', $_COOKIE) && $_REQUEST['FC_captcha_input'] != "") {
+		if (is_user_logged_in() && isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'dashboard') {
+			$returnVal = true;
+		} else if (array_key_exists('FC_captcha_key', $_COOKIE) && $_REQUEST['FC_captcha_input'] != "") {
 			if ($caseSensitive == 1) {
 				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY '%s' AND captcha LIKE BINARY '%s'";
 			} else {
@@ -368,12 +374,22 @@ class FlexibleCaptcha {
 			} else {
 				$returnVal = false;
 			}
+			
 			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
 			$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
 		} else {
 			$returnVal = false;
 		}
 		return $returnVal;
+	}
+
+	function purge_captcha() {
+		global $wpdb;
+		if (get_option('FC_last_captcha_purge') < time() - 3600) {
+			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE time<(NOW() - INTERVAL 2 HOUR)";
+			$result = $wpdb->query($wpdb->prepare($deleteQuery));
+			update_option('FC_last_captcha_purge', time());
+		}
 	}
 
 	function submit_default_dimensions() {
@@ -388,7 +404,7 @@ class FlexibleCaptcha {
 				update_option('FC_default_height', $_POST['FC_default_height']);
 			}
 			
-			print "Default dimentions successfully saved.";
+			print "Default dimensions successfully saved.";
 		}
 		die();
 	}
