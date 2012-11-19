@@ -360,7 +360,7 @@ class FlexibleCaptcha {
 	function check_captcha_val() {
 		global $wpdb;
 		$caseSensitive = get_option('FC_case_sensitive');
-		if (is_user_logged_in() && isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'dashboard' && isset($_REQUEST['action']) && $_REQUEST['action'] == 'replyto-comment') {
+		if (is_user_logged_in() && isset($_REQUEST['mode']) && in_array($_REQUEST['mode'], array('dashboard', 'detail', 'single')) && isset($_REQUEST['action']) && $_REQUEST['action'] == 'replyto-comment') {
 			$returnVal = true;
 		} else if (array_key_exists('FC_captcha_key', $_COOKIE) && $_REQUEST['FC_captcha_input'] != "") {
 			if ($caseSensitive == 1) {

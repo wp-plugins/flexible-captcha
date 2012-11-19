@@ -33,6 +33,9 @@ A. [FC_captcha_fields]
 
 == Changelog ==
 
+= 0.4 =
+Fixed problem with replying to comments on the dashboard.  0.3 didnt work with replying from the page or post edit screens.
+
 = 0.3 =
 Fixed problem with replying to comments on the dashboard.
 Removed PHP notice when checking for captcha request.
@@ -46,6 +49,9 @@ Modified javascript to regenerate captcha image.  Added ajax loader image.
 Initial version.
 
 == Upgrade Notice ==
+
+= 0.4 =
+Fixed problem with replying to comments on the dashboard.  0.3 didnt work with replying from the page or post edit screens.
 
 = 0.3 =
 Fixed problem with replying to comments on the dashboard.
