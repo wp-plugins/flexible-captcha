@@ -63,6 +63,9 @@ class FlexibleCaptcha {
 		if (get_option('FC_add_to_comments') == '') {
 			update_option('FC_add_to_comments', 1);
 		}
+		if (get_option('FC_add_to_login') == '') {
+			update_option('FC_add_to_login', 1);
+		}
 		if (get_option('FC_add_to_registration') == 1 || get_option('FC_add_to_comments') == 1) {
 			update_option('FC_add_jquery_to_header', 1);
 		}
@@ -71,13 +74,7 @@ class FlexibleCaptcha {
 			@mkdir($this->fontDirectory);
 		}
 		if (get_option('FC_uploaded_fonts') == '') {
-			$includedFonts = array('Sansation_Bold.ttf', 'Sansation_Bold_Italic.ttf', 'Sansation_Italic.ttf', 'Sansation_Light.ttf', 'Sansation_Light_Italic.ttf', 'Sansation_Regular.ttf');
-			foreach($includedFonts as $fontFile) {
-				if (!file_exists($this->fontDirectory . $fontFile)) {
-					@copy($this->absPath . "/fonts/" . $fontFile, $this->fontDirectory . $fontFile);
-				}
-			}
-			update_option('FC_uploaded_fonts', $includedFonts);
+			$this->setup_default_fonts();
 		}
 	}
 
@@ -98,6 +95,7 @@ class FlexibleCaptcha {
 			delete_option('FC_case_sensitive');
 			delete_option('FC_add_to_registration');
 			delete_option('FC_add_to_comments');
+			delete_option('FC_add_to_login');
 			delete_option('FC_add_jquery_to_header');
 			
 			if (is_array(get_option('FC_uploaded_fonts'))) {
@@ -115,6 +113,16 @@ class FlexibleCaptcha {
 			
 			
 		}
+	}
+	
+	function setup_default_fonts() {
+		$includedFonts = array('Sansation_Bold.ttf', 'Sansation_Bold_Italic.ttf', 'Sansation_Italic.ttf', 'Sansation_Light.ttf', 'Sansation_Light_Italic.ttf', 'Sansation_Regular.ttf');
+		foreach($includedFonts as $fontFile) {
+			if (!file_exists($this->fontDirectory . $fontFile)) {
+				@copy($this->absPath . "/fonts/" . $fontFile, $this->fontDirectory . $fontFile);
+			}
+		}
+		update_option('FC_uploaded_fonts', $includedFonts);
 	}
 	
 	function setup_nonce() {
@@ -176,6 +184,10 @@ class FlexibleCaptcha {
 			#icon-fc-settings {
 				background: url("<?php print $this->urlPath; ?>/images/fc-icon-32x32.png") no-repeat scroll 0px 0px transparent;
 			}
+
+			.FC-options-container {
+				margin: 10px 10px 30px;
+			}
 		</style>
 		<?php
 	}
@@ -229,10 +241,31 @@ class FlexibleCaptcha {
 		$fontFiles = get_option('FC_uploaded_fonts');
 		if (is_array($fontFiles)) {
 			for($i=0; $i<$fontCount; $i++) {
-				$this->fonts[]=$this->fontDirectory . $fontFiles[mt_rand()&(sizeof($fontFiles)-1)];
+				$randomFontIndex = mt_rand()&(sizeof($fontFiles)-1);
+				$tmpName = $this->fontDirectory . $fontFiles[$randomFontIndex];
+				if (file_exists($tmpName)) {
+					$this->fonts[]=$tmpName;
+				} else {
+					while(!file_exists($tmpName) && sizeof($fontFiles) > 0) {
+						unset($fontFiles[$randomFontIndex]);
+						$fontFiles = array_values($fontFiles);
+						$randomFontIndex = mt_rand()&(sizeof($fontFiles)-1);
+						$tmpName = $this->fontDirectory . $fontFiles[$randomFontIndex];
+					}
+					if (sizeof($fontFiles) == 0) {
+						$this->setup_default_fonts();
+						$fontFiles = get_option('FC_uploaded_fonts');
+						$randomFontIndex = mt_rand()&(sizeof($fontFiles)-1);
+						$tmpName = $this->fontDirectory . $fontFiles[$randomFontIndex];
+					} else {
+						update_option('FC_uploaded_fonts', $fontFiles);
+					}
+					
+					$this->fonts[]=$tmpName;
+				}
 			}
 		} else {
-			$this->fonts[] = $this->fontDirectory . 'Sansation_Regular.ttf';
+			$this->setup_default_fonts();
 		}
 	}
 	
@@ -260,8 +293,8 @@ class FlexibleCaptcha {
 	public function gen_string() {
 		global $wpdb;
 		if (array_key_exists('FC_captcha_key', $_COOKIE)) {
-			#$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
-			#$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
+			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+			$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
 		}
 		$count=0;
 		$this->string="";
@@ -392,7 +425,7 @@ class FlexibleCaptcha {
 		}
 	}
 
-	function submit_default_dimensions() {
+	function submit_settings() {
 		if (wp_verify_nonce( $_POST['FC_nonce'], plugin_basename(__FILE__) )) {
 			##Set width
 			if (is_numeric($_POST['FC_default_width']) && $_POST['FC_default_width'] < 1000 && $_POST['FC_default_width'] >= 100) {
@@ -403,27 +436,14 @@ class FlexibleCaptcha {
 			if (is_numeric($_POST['FC_default_height']) && $_POST['FC_default_height'] < 1000 && $_POST['FC_default_width'] >= 16) {
 				update_option('FC_default_height', $_POST['FC_default_height']);
 			}
-			
-			print "Default dimensions successfully saved.";
-		}
-		die();
-	}
 
-	function submit_request_key() {
-		if (wp_verify_nonce( $_POST['FC_nonce'], plugin_basename(__FILE__) )) {
-			if ($_POST['FC_request_key'] != '') {
+			if (isset($_POST['FC_request_key']) && $_POST['FC_request_key'] != '') {
 				##Set request key
 				update_option('FC_request_key', $_POST['FC_request_key']);
-				print "Request key successfully saved.";
-			} else {
-				print "Request key not saved.  The submitted key did not have a value.";
+			} else if (isset($_POST['FC_request_key'])) {
+				print "Request key not saved.  The submitted key did not have a value.<br />";
 			}
-		}
-		die();
-	}
-
-	function submit_general_settings() {
-		if (wp_verify_nonce( $_POST['FC_nonce'], plugin_basename(__FILE__) )) {
+			
 			if (is_numeric($_POST['FC_random_font_count']) && $_POST['FC_random_font_count'] < 100) {
 				update_option('FC_random_font_count', $_POST['FC_random_font_count']);
 			}
@@ -450,6 +470,12 @@ class FlexibleCaptcha {
 				update_option('FC_add_to_registration', 0);
 			}
 			
+			if ($_POST['FC_add_to_login'] == 1) {
+				update_option('FC_add_to_login', 1);
+			} else {
+				update_option('FC_add_to_login', 0);
+			}
+			
 			if ($_POST['FC_add_jquery_to_header'] == 1 || get_option('FC_add_to_registration') == 1 || get_option('FC_add_to_comments') == 1) {
 				update_option('FC_add_jquery_to_header', 1);
 			} else {
@@ -461,14 +487,8 @@ class FlexibleCaptcha {
 			} else {
 				update_option('FC_preserve_settings', 0);
 			}
-			
-			print "Settings successfully saved.";
-		}
-		die();
-	}
-	
-	function submit_colors() {
-		if (wp_verify_nonce( $_POST['FC_nonce'], plugin_basename(__FILE__) )) {
+
+
 			##Set font_color
 			if (is_array($_POST['FC_font_color']) && is_numeric($_POST['FC_font_color'][0]) && is_numeric($_POST['FC_font_color'][1]) && is_numeric($_POST['FC_font_color'][2])) {
 				update_option('FC_font_color', $_POST['FC_font_color']);
@@ -481,11 +501,12 @@ class FlexibleCaptcha {
 			if (is_array($_POST['FC_grad_color_2']) && is_numeric($_POST['FC_grad_color_2'][0]) && is_numeric($_POST['FC_grad_color_2'][1]) && is_numeric($_POST['FC_grad_color_2'][2])) {
 				update_option('FC_grad_color_2', $_POST['FC_grad_color_2']);
 			}
-			print "Colors successfully saved.";
+			
+			print "Settings successfully saved.";
 		}
 		die();
 	}
-
+	
 	function add_to_comment_form() {
 		if (get_option('FC_add_to_comments') == 1) {
 			print $this->get_captcha_fields_display(get_option('FC_default_width'), get_option('FC_default_height'));
@@ -493,11 +514,17 @@ class FlexibleCaptcha {
 	}
 
 	function add_to_registration_form() {
-		if (get_option('FC_add_to_comments') == 1) {
+		if (get_option('FC_add_to_registration') == 1) {
 			print $this->get_captcha_fields_display(get_option('FC_default_width'), get_option('FC_default_height'));
 		}
 	}
 
+	function add_to_login_form() {
+		if (get_option('FC_add_to_login') == 1) {
+			print $this->get_captcha_fields_display(get_option('FC_default_width'), get_option('FC_default_height'));
+		}
+	}
+	
 	function check_registration_submit($login, $email, $errors) {
 		if (get_option('FC_add_to_registration') == 1 && !$this->check_captcha_val()) {
 			$errors->add('bad_captcha', "<strong>ERROR</strong>: The entered text did not match the captcha image.");
@@ -512,6 +539,15 @@ class FlexibleCaptcha {
 		return $commentdata;
 	}
 
+	function check_login_submit($user, $username, $password) {
+		if ($_POST['wp-submit'] == 'Log In' && get_option('FC_add_to_login') == 1 && !$this->check_captcha_val()) {
+			$WP_Error = new WP_Error();
+			$WP_Error->add('bad_captcha', '<strong>Error</strong>: The entered text did not match the captcha image.');
+			return $WP_Error;
+		}
+		return $user;
+	}
+	
 	function add_jquery_to_header() {
 		if (get_option('FC_add_jquery_to_header') == 1) {
 			wp_enqueue_script("jquery");

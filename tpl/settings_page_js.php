@@ -1,31 +1,91 @@
 <script type="text/javascript" language="javascript" src="<?php print $this->urlPath . "/js/colorpicker.js"; ?>"></script>
 <script type="text/javascript" language="javascript">
-	function FC_submit_default_dimensions() {
-		var default_width = jQuery('#FC_default_width').val();
-		var default_height = jQuery('#FC_default_height').val();
+	function FC_submit_settings() {
+		var randomFontCount = jQuery('#FC_random_font_count').val();
+		var gradientTransitions = jQuery('#FC_gradient_transitions').val();
 		
+		var checkBoxes = {
+			'FC_case_sensitive': 0,
+			'FC_add_to_comments': 0,
+			'FC_add_to_registration': 0,
+			'FC_add_to_login': 0,
+			'FC_add_jquery_to_header': 0,
+			'FC_preserve_settings': 0
+		};
+		
+		var postObject = {
+			'FC_case_sensitive': 0,
+			'FC_add_to_comments': 0,
+			'FC_add_to_registration': 0,
+			'FC_add_to_login': 0,
+			'FC_add_jquery_to_header': 0,
+			'FC_preserve_settings': 0,
+			'FC_random_font_count': jQuery('#FC_random_font_count').val(),
+			'FC_gradient_transitions': jQuery('#FC_gradient_transitions').val(),
+			'FC_default_width': jQuery('#FC_default_width').val(),
+			'FC_default_height': jQuery('#FC_default_height').val(),
+			'FC_request_key': jQuery('#FC_request_key').val(),
+			'FC_font_color': {
+				0: jQuery('#FC_font_color_r').val(),
+				1: jQuery('#FC_font_color_g').val(),
+				2: jQuery('#FC_font_color_b').val()
+			},
+			'FC_grad_color_1': {
+				0: jQuery('#FC_grad_color_1_r').val(),
+				1: jQuery('#FC_grad_color_1_g').val(),
+				2: jQuery('#FC_grad_color_1_b').val()
+			},
+			'FC_grad_color_2': {
+				0: jQuery('#FC_grad_color_2_r').val(),
+				1: jQuery('#FC_grad_color_2_g').val(),
+				2: jQuery('#FC_grad_color_2_b').val()
+			},
+			'FC_nonce': '<?php print $this->nonce; ?>'
+		};
+		
+		for(var key in checkBoxes) {
+			if (jQuery('#'+key).attr('checked')) {
+				checkBoxes[key] = 1;
+			}
+			postObject[key] = checkBoxes[key];
+		}
 
-		var load_element = jQuery('#FC-default-dim-div .inside');
-		var revertHtml = load_element.html();
-		load_element.html('<div style="width: 100%;text-align: center;"><img src="<?php print $this->urlPath . "/images/ajax-loader.gif"; ?>"></div>');
-		jQuery.post(encodeURI(ajaxurl + '?action=FC_submit_default_dimensions'), { 'FC_default_width': default_width, 'FC_default_height': default_height, 'FC_nonce': '<?php print $this->nonce; ?>' }, function (result) {
-			alert(result);
-			load_element.html(revertHtml);
-			jQuery('#FC_default_width').val(default_width);
-			jQuery('#FC_default_height').val(default_height);
-		});
-	}
-
-	function FC_submit_request_key() {
-		var requestKey = jQuery('#FC_request_key').val();
-		var loadElement = jQuery('#FC-request-key-div .inside');
+		var loadElement = jQuery('#FC-settings-div');
 		var revertHtml = loadElement.html();
-		loadElement.html('<div style="width: 100%;text-align: center;"><img src="<?php print $this->urlPath . "/images/ajax-loader.gif"; ?>"></div>');
-		jQuery.post(encodeURI(ajaxurl + '?action=FC_submit_request_key'), { 'FC_request_key': requestKey, 'FC_nonce': '<?php print $this->nonce; ?>' }, function (result) {
+		loadElement.html('<div style="width: 100%;text-align: center;"><img src="<?php print $this->urlPath . "/images/ajax-loader-round.gif"; ?>"></div>');
+		jQuery.post(encodeURI(ajaxurl + '?action=FC_submit_settings'), postObject, function (result) {
 			alert(result);
 			loadElement.html(revertHtml);
-			jQuery('#FC_request_key').val(requestKey);
+			jQuery('#FC_random_font_count').val(postObject['FC_random_font_count']);
+			jQuery('#FC_gradient_transitions').val(postObject['FC_gradient_transitions']);
+			
+			for(var key in checkBoxes) {
+				if (checkBoxes[key] == 1) {
+					jQuery('#'+key).attr('checked', true);
+				} else {
+					jQuery('#'+key).attr('checked', false);
+				}
+			}
+
+			jQuery('#FC_request_key').val(postObject['FC_request_key']);
+
+			jQuery('#FC_default_width').val(postObject['FC_default_width']);
+			jQuery('#FC_default_height').val(postObject['FC_default_height']);
+
+			//Reset Colors
+			jQuery('#FC_font_color_r').val(postObject['FC_font_color'][0]);
+			jQuery('#FC_font_color_g').val(postObject['FC_font_color'][1]);
+			jQuery('#FC_font_color_b').val(postObject['FC_font_color'][2]);
+			jQuery('#FC_grad_color_1_r').val(postObject['FC_grad_color_1'][0]);
+			jQuery('#FC_grad_color_1_g').val(postObject['FC_grad_color_1'][1]);
+			jQuery('#FC_grad_color_1_b').val(postObject['FC_grad_color_1'][2]);
+			jQuery('#FC_grad_color_2_r').val(postObject['FC_grad_color_2'][0]);
+			jQuery('#FC_grad_color_2_g').val(postObject['FC_grad_color_2'][1]);
+			jQuery('#FC_grad_color_2_b').val(postObject['FC_grad_color_2'][2]);
+			add_color_pickers();
 		});
+
+		return false;
 	}
 
 	function FC_delete_font_file(fontFile, rowId) {
@@ -38,67 +98,6 @@
 			jQuery('#FC_font_file_'+rowId).remove();
 		});
 		return false;
-	}
-
-	function FC_submit_general_settings() {
-		var randomFontCount = jQuery('#FC_random_font_count').val();
-		var gradientTransitions = jQuery('#FC_gradient_transitions').val();
-		
-		var checkBoxes = {'FC_case_sensitive': 0, 'FC_add_to_comments': 0, 'FC_add_to_registration': 0, 'FC_add_jquery_to_header': 0, 'FC_preserve_settings': 0};
-		
-		var postObject = { 'FC_random_font_count': randomFontCount, 'FC_gradient_transitions': gradientTransitions, 'FC_case_sensitive': 0, 'FC_add_to_comments': 0, 'FC_add_to_registration': 0, 'FC_add_jquery_to_header': 0, 'FC_preserve_settings': 0, 'FC_nonce': '<?php print $this->nonce; ?>' };
-
-		for(var key in checkBoxes) {
-			if (jQuery('#'+key).attr('checked')) {
-				checkBoxes[key] = 1;
-			}
-			postObject[key] = checkBoxes[key];
-		}
-		
-		var loadElement = jQuery('#FC-general-settings-div .inside');
-		var revertHtml = loadElement.html();
-		loadElement.html('<div style="width: 100%;text-align: center;"><img src="<?php print $this->urlPath . "/images/ajax-loader.gif"; ?>"></div>');
-		jQuery.post(encodeURI(ajaxurl + '?action=FC_submit_general_settings'), postObject, function (result) {
-			alert(result);
-			loadElement.html(revertHtml);
-			jQuery('#FC_random_font_count').val(randomFontCount);
-			jQuery('#FC_gradient_transitions').val(gradientTransitions);
-			
-			for(var key in checkBoxes) {
-				if (checkBoxes[key] == 1) {
-					jQuery('#'+key).attr('checked', true);
-				} else {
-					jQuery('#'+key).attr('checked', false);
-				}
-			}
-		});
-		return false;
-	}
-	
-	function FC_submit_colors() {
-		var font_color = new Array(jQuery('#FC_font_color_r').val(), jQuery('#FC_font_color_g').val(), jQuery('#FC_font_color_b').val());
-		var grad_color_1 = new Array(jQuery('#FC_grad_color_1_r').val(), jQuery('#FC_grad_color_1_g').val(), jQuery('#FC_grad_color_1_b').val());
-		var grad_color_2 = new Array(jQuery('#FC_grad_color_2_r').val(), jQuery('#FC_grad_color_2_g').val(), jQuery('#FC_grad_color_2_b').val());
-				
-		var load_element = jQuery('#FC-colors-div .inside');
-		var revertHtml = load_element.html();
-		load_element.html('<div style="width: 100%;text-align: center;"><img src="<?php print $this->urlPath . "/images/ajax-loader.gif"; ?>"></div>');
-		jQuery.post(encodeURI(ajaxurl + '?action=FC_submit_colors'), { 'FC_font_color': font_color, 'FC_grad_color_1': grad_color_1, 'FC_grad_color_2': grad_color_2, 'FC_nonce': '<?php print $this->nonce; ?>' }, function (result) {
-			alert(result);
-			load_element.html(revertHtml);
-			
-			//Reset Colors
-			jQuery('#FC_font_color_r').val(font_color[0]);
-			jQuery('#FC_font_color_g').val(font_color[1]);
-			jQuery('#FC_font_color_b').val(font_color[2]);
-			jQuery('#FC_grad_color_1_r').val(grad_color_1[0]);
-			jQuery('#FC_grad_color_1_g').val(grad_color_1[1]);
-			jQuery('#FC_grad_color_1_b').val(grad_color_1[2]);
-			jQuery('#FC_grad_color_2_r').val(grad_color_2[0]);
-			jQuery('#FC_grad_color_2_g').val(grad_color_2[1]);
-			jQuery('#FC_grad_color_2_b').val(grad_color_2[2]);
-			add_color_pickers();
-		});
 	}
 	
 	function add_color_pickers() {
