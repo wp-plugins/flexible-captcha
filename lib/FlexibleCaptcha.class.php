@@ -134,7 +134,6 @@ class FlexibleCaptcha {
 		$plugin_page=add_menu_page('Flexible Captcha', 'Flexible Captcha', 'activate_plugins', 'Flexible_Captcha', array($this, 'settings_page'), $this->urlPath."/images/fc-icon-16x16.png");
 		add_action('admin_head-'.$plugin_page, array($this, 'admin_styles'));
 		add_action('admin_head-'.$plugin_page, array($this, 'settings_page_head'));
-		add_action('admin_head-'.$plugin_page, array($this, 'common_js'));
 	}
 
 	function settings_page() {
@@ -192,9 +191,6 @@ class FlexibleCaptcha {
 		<?php
 	}
 	
-	function common_js() {
-	}
-
 	function get_request_key() {
 		$requestKey = get_option('FC_request_key');
 		if ($requestKey == "") {
@@ -211,8 +207,9 @@ class FlexibleCaptcha {
 	
 	function get_captcha_fields_display($width, $height) {
 		$requestKey = $this->get_request_key();
+		$uniqueFieldID = md5(mt_rand(9999, 9999999999) * mt_rand(9999, 9999999999));
 		ob_start();
-		require_once($this->absPath . "/tpl/captcha_fields.php");
+		require($this->absPath . "/tpl/captcha_fields.php");
 		return ob_get_clean();
 	}
 	
@@ -279,22 +276,50 @@ class FlexibleCaptcha {
 		$this->gen_gradient($this->image, 0, 0);
 		#$backgroundColor = @imagecolorallocate($this->image, 0, 0, 0);
 		#imageloadfont();
-		$this->gen_string();
-		header("Pragma: no-cache");
-		header("cache-Control: no-cache, must-revalidate");
-		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
-		header("Content-type: image/png");
-		@imagepng($this->image);
-		@imagedestroy($this->image);
-		$this->purge_captcha();
+		if ($this->gen_string()) {
+			header("Pragma: no-cache");
+			header("cache-Control: no-cache, must-revalidate");
+			header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+			header("Content-type: image/png");
+			@imagepng($this->image);
+			@imagedestroy($this->image);
+			$this->purge_captcha();
+		}
 		exit;
 	}
 
 	public function gen_string() {
 		global $wpdb;
-		if (array_key_exists('FC_captcha_key', $_COOKIE)) {
-			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
-			$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
+		if (!isset($_GET['uniqueID']) || !preg_match('/^[a-f0-9]{32}$/', $_GET['uniqueID'])) {
+			$this->string="";
+			return false;
+		} else {
+			$uniqueID = $_GET['uniqueID'];
+		}
+		 
+		if (isset($_COOKIE['FC_captcha_key']) && is_array($_COOKIE['FC_captcha_key'])) {
+			$count = 0;
+			if (isset($_COOKIE['FC_captcha_key'][$uniqueID])) {
+				$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+				$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key'][$uniqueID]));
+				unset($_COOKIE['FC_captcha_key'][$uniqueID]);
+			}
+			
+			if (sizeof($_COOKIE['FC_captcha_key']) > 20) {
+				while(sizeof($_COOKIE['FC_captcha_key']) > 20 && $count < 5) {
+					$count++;
+					$oldCookieVal = reset($_COOKIE['FC_captcha_key']);
+					if (preg_match('/^[a-f0-9]{32}$/', $oldCookieVal)) {
+						$oldCookieIndex = key($_COOKIE['FC_captcha_key']);
+						$tmp = array_shift($_COOKIE['FC_captcha_key']);
+						$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+						$result = $wpdb->query($wpdb->prepare($deleteQuery, $oldCookieVal));
+						if ($uniqueID != $oldCookieIndex) {
+							setcookie('FC_captcha_key['.$oldCookieIndex.']', 0, time()-3600);
+						}
+					}
+				}
+			}
 		}
 		$count=0;
 		$this->string="";
@@ -329,8 +354,11 @@ class FlexibleCaptcha {
 			$count++;
 		}
 		$cookieVal = md5(mt_rand(9999, 9999999999) * mt_rand(9999, 9999999999));
-		setcookie('FC_captcha_key', $cookieVal);
-		$wpdb->insert($wpdb->prefix."FC_captcha_store", array("time"=>date("Y-m-d H:i:s"), "captcha"=>$this->string, "cookie_val"=>$cookieVal));
+		$cookieIndex = md5(mt_rand(9999, 9999999999) * mt_rand(9999, 9999999999));
+		
+		setcookie('FC_captcha_key['.$uniqueID.']', $cookieVal);
+		$wpdb->insert($wpdb->prefix."FC_captcha_store", array("time"=>current_time('mysql'), "captcha"=>$this->string, "cookie_val"=>$cookieVal));
+		return true;
 	}
 
 
@@ -393,25 +421,25 @@ class FlexibleCaptcha {
 	function check_captcha_val() {
 		global $wpdb;
 		$caseSensitive = get_option('FC_case_sensitive');
+		$returnVal = false;
+		
 		if (is_user_logged_in() && isset($_REQUEST['mode']) && in_array($_REQUEST['mode'], array('dashboard', 'detail', 'single')) && isset($_REQUEST['action']) && $_REQUEST['action'] == 'replyto-comment') {
 			$returnVal = true;
-		} else if (array_key_exists('FC_captcha_key', $_COOKIE) && $_REQUEST['FC_captcha_input'] != "") {
+		} else if (isset($_COOKIE['FC_captcha_key']) && is_array($_COOKIE['FC_captcha_key']) && $_REQUEST['FC_captcha_input'] != "" &&
+		isset($_REQUEST['FC_captcha_unique_id']) && preg_match('/^[a-f0-9]{32}$/', $_REQUEST['FC_captcha_unique_id']) &&
+		isset($_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']]) && preg_match('/^[a-f0-9]{32}$/', $_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']])) {
 			if ($caseSensitive == 1) {
 				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY '%s' AND captcha LIKE BINARY '%s'";
 			} else {
 				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY '%s' AND captcha='%s'";
 			}
 			
-			if ($wpdb->get_var($wpdb->prepare($sql, $_COOKIE['FC_captcha_key'], $_REQUEST['FC_captcha_input'])) == 1) {
+			$captchaKey = $_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']];
+			if ($wpdb->get_var($wpdb->prepare($sql, $captchaKey, $_REQUEST['FC_captcha_input'])) == 1) {
 				$returnVal = true;
-			} else {
-				$returnVal = false;
 			}
-			
 			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
-			$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key']));
-		} else {
-			$returnVal = false;
+			$result = $wpdb->query($wpdb->prepare($deleteQuery, $captchaKey));
 		}
 		return $returnVal;
 	}
@@ -419,8 +447,9 @@ class FlexibleCaptcha {
 	function purge_captcha() {
 		global $wpdb;
 		if (get_option('FC_last_captcha_purge') < time() - 3600) {
-			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE time<(NOW() - INTERVAL 2 HOUR)";
-			$result = $wpdb->query($wpdb->prepare($deleteQuery));
+			$searchTime = date("Y-m-d H:i:s", strtotime(current_time('mysql')) - 1800);
+			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE time<%s";
+			$result = $wpdb->query($wpdb->prepare($deleteQuery, $searchTime));
 			update_option('FC_last_captcha_purge', time());
 		}
 	}
