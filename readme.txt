@@ -18,6 +18,7 @@ This plugin allows you to create image captcha for any form.  It can be placed o
 2. Upload the 'flexible-captcha' directory to the `/wp-content/plugins/` directory
 3. Activate the plugin through the 'Plugins' menu in WordPress
 4. Go to the <a href="http://www.jsterup.com/dev/wordpress/plugins/flexible-captcha/documentation">documentation page</a> to see ways to use the captcha.
+NOTE:  The GD library with TrueType support enabled is required to run this plugin.
 
 == Frequently Asked Questions ==
 
