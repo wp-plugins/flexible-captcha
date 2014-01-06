@@ -28,13 +28,9 @@ Q. What is the shortcode to add captcha to a page?
 A. [FC_captcha_fields]
 
 
-
-
 Q. I have installed the plugin and set it up why arent the images appearing on my form?
 
 A. You need to have the GD library with FreeType support enabled.
-
-
 
 
 Q. I have set up a custom form and added the shortcode to it and the captcha image appears.  When I submit the form why isnt the captcha required?
