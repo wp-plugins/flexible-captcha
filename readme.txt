@@ -24,13 +24,19 @@ NOTE:  The GD library with FreeType support enabled is required to run this plug
 == Frequently Asked Questions ==
 
 Q. What is the shortcode to add captcha to a page?
+
 A. [FC_captcha_fields]
 
+
 Q. I have installed the plugin and set it up why arent the images appearing on my form?
+
 A. You need to have the GD library with FreeType support enabled.
 
+
 Q. I have set up a custom form and added the shortcode to it and the captcha image appears.  When I submit the form why isnt the captcha required?
+
 A. You need to handle the form submission.  Its up to you to figure out how to do that.  Go to http://www.jsterup.com/dev/wordpress/plugins/flexible-captcha/documentation for an example of how to do this with a form created with the contact form 7 plugin.
+
 
 == Screenshots ==
 
