@@ -6,11 +6,15 @@ Requires at least: 3.1
 Tested up to: 3.7.1
 Stable tag: 1.1
 
-This plugin allows you to create image captcha for any form.  It can be placed on any page with a shortcode or automatically included on the comment and registration forms.  It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
+This plugin allows you to create image captcha for any form.  
+It has a shortcode that can be placed on any page and a simple function call that will validate the captcha for you if you are using a custom form.  It can automatically be included on the comment, registration, and log in forms.
+It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
 
 == Description ==
 
-This plugin allows you to create image captcha for any form.  It can be placed on any page with a shortcode or automatically included on the comment and registration forms.  It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
+This plugin allows you to create image captcha for any form.  
+It has a shortcode that can be placed on any page and a simple function call that will validate the captcha for you if you are using a custom form.  It can automatically be included on the comment, registration, and log in forms.
+It includes an interface to set the colors of the font and background gradient for the rendered images.  You can set whether the captcha will be case sensitive or not.  You can also upload font files to change the font used in the images.
 
 == Installation ==
 
