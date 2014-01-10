@@ -131,7 +131,7 @@ class FlexibleCaptcha {
 	
 	function admin_menu() {
 		global $wpdb;
-		$plugin_page=add_menu_page('Flexible Captcha', 'Flexible Captcha', 'activate_plugins', 'Flexible_Captcha', array($this, 'settings_page'), $this->urlPath."/images/fc-icon-16x16.png");
+		$plugin_page=add_submenu_page('options-general.php', 'Flexible Captcha Settings', 'Flexible Captcha', 'activate_plugins', 'Flexible_Captcha', array($this, 'settings_page'));
 		add_action('admin_head-'.$plugin_page, array($this, 'admin_styles'));
 		add_action('admin_head-'.$plugin_page, array($this, 'settings_page_head'));
 	}
@@ -141,6 +141,10 @@ class FlexibleCaptcha {
 			$this->handle_font_upload();
 		}
 		$fontFiles = get_option('FC_uploaded_fonts');
+		$errMsg = "";
+		if (!extension_loaded('gd') || !function_exists('gd_info')) {
+			$errMsg = "IMPORTANT!! It looks like the GD library is not enabled.  You must enable the GD library and FreeType support for PHP or the images will not appear.";
+		}
 		require_once($this->absPath . "/tpl/settings.php");
 	}
 

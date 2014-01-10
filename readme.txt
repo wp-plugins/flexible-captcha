@@ -3,8 +3,8 @@ Contributors: foomagoo
 Donate link: 
 Tags: Flexible Captcha
 Requires at least: 3.1
-Tested up to: 3.7.1
-Stable tag: 1.1
+Tested up to: 3.8
+Stable tag: 1.2
 
 This plugin allows you to create image captcha for any form.  
 It has a shortcode that can be placed on any page and a simple function call that will validate the captcha for you if you are using a custom form.  It can automatically be included on the comment, registration, and log in forms.
@@ -50,6 +50,10 @@ A. You need to handle the form submission.  Its up to you to figure out how to d
 
 == Changelog ==
 
+= 1.2 =
+Moved the settings page under the settings item in the admin menu.
+Added error message to the settings page if the GD library is not installed.
+
 = 1.1 =
 Fixed a bug that wouldn't allow multiple captchas on the same page.
 Fixed the captcha purge to ensure the same timezone is used as the insert.
@@ -75,6 +79,10 @@ Modified javascript to regenerate captcha image.  Added ajax loader image.
 Initial version.
 
 == Upgrade Notice ==
+
+= 1.2 =
+Moved the settings page under the settings item in the admin menu.
+Added error message to the settings page if the GD library is not installed.
 
 = 1.1 =
 Fixed a bug that wouldn't allow multiple captchas on the same page.
