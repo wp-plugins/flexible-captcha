@@ -3,7 +3,7 @@ Contributors: foomagoo
 Donate link: 
 Tags: Flexible Captcha
 Requires at least: 3.1
-Tested up to: 3.8
+Tested up to: 3.9.1
 Stable tag: 1.2
 
 This plugin allows you to create image captcha for any form.  
