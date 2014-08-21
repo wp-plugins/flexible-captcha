@@ -1,9 +1,8 @@
 <script type="text/javascript" language="javascript" src="<?php print $this->urlPath . "/js/colorpicker.js"; ?>"></script>
 <script type="text/javascript" language="javascript">
+	var FC_bg_colors = <?php print json_encode(get_option('FC_bg_colors')); ?>;
+	var FC_font_colors = <?php print json_encode(get_option('FC_font_colors')); ?>;
 	function FC_submit_settings() {
-		var randomFontCount = jQuery('#FC_random_font_count').val();
-		var gradientTransitions = jQuery('#FC_gradient_transitions').val();
-		
 		var checkBoxes = {
 			'FC_case_sensitive': 0,
 			'FC_add_to_comments': 0,
@@ -21,28 +20,18 @@
 			'FC_add_jquery_to_header': 0,
 			'FC_preserve_settings': 0,
 			'FC_random_font_count': jQuery('#FC_random_font_count').val(),
+			'FC_background_type': jQuery('#FC_background_type').val(),
+			'FC_font_colors': FC_font_colors,
+			'FC_bg_colors': FC_bg_colors,
+			'FC_section_count': jQuery('#FC_section_count').val(),
+			'FC_shape_count': jQuery('#FC_shape_count').val(),
 			'FC_gradient_transitions': jQuery('#FC_gradient_transitions').val(),
 			'FC_default_width': jQuery('#FC_default_width').val(),
 			'FC_default_height': jQuery('#FC_default_height').val(),
 			'FC_request_key': jQuery('#FC_request_key').val(),
-			'FC_font_color': {
-				0: jQuery('#FC_font_color_r').val(),
-				1: jQuery('#FC_font_color_g').val(),
-				2: jQuery('#FC_font_color_b').val()
-			},
-			'FC_grad_color_1': {
-				0: jQuery('#FC_grad_color_1_r').val(),
-				1: jQuery('#FC_grad_color_1_g').val(),
-				2: jQuery('#FC_grad_color_1_b').val()
-			},
-			'FC_grad_color_2': {
-				0: jQuery('#FC_grad_color_2_r').val(),
-				1: jQuery('#FC_grad_color_2_g').val(),
-				2: jQuery('#FC_grad_color_2_b').val()
-			},
 			'FC_nonce': '<?php print $this->nonce; ?>'
 		};
-		
+
 		for(var key in checkBoxes) {
 			if (jQuery('#'+key).attr('checked')) {
 				checkBoxes[key] = 1;
@@ -58,7 +47,9 @@
 			loadElement.html(revertHtml);
 			jQuery('#FC_random_font_count').val(postObject['FC_random_font_count']);
 			jQuery('#FC_gradient_transitions').val(postObject['FC_gradient_transitions']);
-			
+			jQuery('#FC_background_type').val(postObject['FC_background_type']);
+			jQuery('#FC_shape_count').val(postObject['FC_shape_count']);
+			jQuery('#FC_section_count').val(postObject['FC_section_count']);
 			for(var key in checkBoxes) {
 				if (checkBoxes[key] == 1) {
 					jQuery('#'+key).attr('checked', true);
@@ -72,17 +63,8 @@
 			jQuery('#FC_default_width').val(postObject['FC_default_width']);
 			jQuery('#FC_default_height').val(postObject['FC_default_height']);
 
-			//Reset Colors
-			jQuery('#FC_font_color_r').val(postObject['FC_font_color'][0]);
-			jQuery('#FC_font_color_g').val(postObject['FC_font_color'][1]);
-			jQuery('#FC_font_color_b').val(postObject['FC_font_color'][2]);
-			jQuery('#FC_grad_color_1_r').val(postObject['FC_grad_color_1'][0]);
-			jQuery('#FC_grad_color_1_g').val(postObject['FC_grad_color_1'][1]);
-			jQuery('#FC_grad_color_1_b').val(postObject['FC_grad_color_1'][2]);
-			jQuery('#FC_grad_color_2_r').val(postObject['FC_grad_color_2'][0]);
-			jQuery('#FC_grad_color_2_g').val(postObject['FC_grad_color_2'][1]);
-			jQuery('#FC_grad_color_2_b').val(postObject['FC_grad_color_2'][2]);
-			add_color_pickers();
+			FC_rebuild_colors();
+			FC_add_listeners();
 		});
 
 		return false;
@@ -100,71 +82,127 @@
 		return false;
 	}
 	
-	function add_color_pickers() {
-		jQuery('#FC_font_color_r, #FC_font_color_g, #FC_font_color_b, #FC_font_color_display').ColorPicker({
-			onSubmit: function(hsb, hex, rgb, el) {
-				jQuery('#FC_font_color_r').val(rgb.r);
-				jQuery('#FC_font_color_g').val(rgb.g);
-				jQuery('#FC_font_color_b').val(rgb.b);
-				jQuery('#FC_font_color_display').css('backgroundColor', 'rgb('+rgb.r+', '+rgb.g+', '+rgb.b+')');
-				jQuery(el).ColorPickerHide();
-			},
-			onBeforeShow: function () {
-				var font_color_r = jQuery('#FC_font_color_r').val();
-				var font_color_g = jQuery('#FC_font_color_g').val();
-				var font_color_b = jQuery('#FC_font_color_b').val();
-				jQuery(this).ColorPickerSetColor({r: font_color_r, g: font_color_g, b: font_color_b});
-			}
-		});
-
-		jQuery('#FC_grad_color_1_r, #FC_grad_color_1_g, #FC_grad_color_1_b, #FC_grad_color_1_display').ColorPicker({
-			onSubmit: function(hsb, hex, rgb, el) {
-				jQuery('#FC_grad_color_1_r').val(rgb.r);
-				jQuery('#FC_grad_color_1_g').val(rgb.g);
-				jQuery('#FC_grad_color_1_b').val(rgb.b);
-				jQuery('#FC_grad_color_1_display').css('backgroundColor', 'rgb('+rgb.r+', '+rgb.g+', '+rgb.b+')');
-				jQuery(el).ColorPickerHide();
-			},
-			onBeforeShow: function () {
-				var grad_color_r = jQuery('#FC_grad_color_1_r').val();
-				var grad_color_g = jQuery('#FC_grad_color_1_g').val();
-				var grad_color_b = jQuery('#FC_grad_color_1_b').val();
-				jQuery(this).ColorPickerSetColor({r: grad_color_r, g: grad_color_g, b: grad_color_b});
-			}
-		});
-
-		jQuery('#FC_grad_color_2_r, #FC_grad_color_2_g, #FC_grad_color_2_b, #FC_grad_color_2_display').ColorPicker({
-			onSubmit: function(hsb, hex, rgb, el) {
-				jQuery('#FC_grad_color_2_r').val(rgb.r);
-				jQuery('#FC_grad_color_2_g').val(rgb.g);
-				jQuery('#FC_grad_color_2_b').val(rgb.b);
-				jQuery('#FC_grad_color_2_display').css('backgroundColor', 'rgb('+rgb.r+', '+rgb.g+', '+rgb.b+')');
-				jQuery(el).ColorPickerHide();
-			},
-			onBeforeShow: function () {
-				var grad_color_r = jQuery('#FC_grad_color_2_r').val();
-				var grad_color_g = jQuery('#FC_grad_color_2_g').val();
-				var grad_color_b = jQuery('#FC_grad_color_2_b').val();
-				jQuery(this).ColorPickerSetColor({r: grad_color_r, g: grad_color_g, b: grad_color_b});
-			}
-		});
-
-		var color_r = jQuery('#FC_font_color_r').val();
-		var color_g = jQuery('#FC_font_color_g').val();
-		var color_b = jQuery('#FC_font_color_b').val();
-		jQuery('#FC_font_color_display').css('backgroundColor', 'rgb('+color_r+', '+color_g+', '+color_b+')');
-
-		var color_r = jQuery('#FC_grad_color_1_r').val();
-		var color_g = jQuery('#FC_grad_color_1_g').val();
-		var color_b = jQuery('#FC_grad_color_1_b').val();
-		jQuery('#FC_grad_color_1_display').css('backgroundColor', 'rgb('+color_r+', '+color_g+', '+color_b+')');
-
-		var color_r = jQuery('#FC_grad_color_2_r').val();
-		var color_g = jQuery('#FC_grad_color_2_g').val();
-		var color_b = jQuery('#FC_grad_color_2_b').val();
-		jQuery('#FC_grad_color_2_display').css('backgroundColor', 'rgb('+color_r+', '+color_g+', '+color_b+')');
+	function FC_rebuild_colors() {
+		jQuery('#FC-font-colors-div, #FC-bg-colors-div').html('');
+		FC_add_color_pickers();
 	}
+	
+	function FC_delete_font_colors() {
+		if (confirm('Do you really want to delete the selected Font Colors?')) {
+			selectedIndexes = new Array();
+			jQuery('.FC_delete_font_color').each(function() {
+				if (jQuery(this).attr('checked')) {
+					selectedIndexes[selectedIndexes.length] = jQuery(this).val();
+				}
+			});
+
+			//sort indexes so we start removing at the highest index.
+			selectedIndexes.sort(function(a, b){return b-a});
+			for (var i=0; i<selectedIndexes.length; i++) {
+				FC_font_colors.splice(selectedIndexes[i],1);
+			}
+			FC_rebuild_colors();
+		}
+	}
+
+	function FC_delete_bg_colors(colorIndex) {
+		if (confirm('Do you really want to delete the selected Background Colors?')) {
+			selectedIndexes = new Array();
+			jQuery('.FC_delete_bg_color').each(function() {
+				if (jQuery(this).attr('checked')) {
+					selectedIndexes[selectedIndexes.length] = jQuery(this).val();
+				}
+			});
+
+			//sort indexes so we start removing at the highest index.
+			selectedIndexes.sort(function(a, b){return b-a});
+			for (var i=0; i<selectedIndexes.length; i++) {
+				FC_bg_colors.splice(selectedIndexes[i],1);
+			}
+			FC_rebuild_colors();
+		}
+	}
+
+	function FC_add_new_color(colorType) {
+		if (colorType == 'font') {
+			colorIndex = FC_font_colors.length;
+			FC_font_colors[colorIndex] = [0, 0, 0];
+			FC_add_font_color(colorIndex);
+		} else if (colorType == 'bg') {
+			colorIndex = FC_bg_colors.length;
+			FC_bg_colors[colorIndex] = [0, 0, 0];
+			FC_add_bg_color(colorIndex);
+		}
+	}
+	
+	function FC_add_font_color(colorIndex) {
+		jQuery('#FC-font-colors-div').append(
+			'<div id="FC_font_color_'+colorIndex+'_div" class="FC_font_color_div" style="width: 90px;height: 30px;float: left;margin: 5px;">&nbsp;</div>'
+			+'<input name="FC_delete_font_color" class="FC_delete_font_color" type="checkbox" value="'+colorIndex+'" style="margin: 5px 0px 0px -95px;float: left;" />'
+		);
+		
+		jQuery('#FC_font_color_'+colorIndex+'_div').ColorPicker({
+			onSubmit: function(hsb, hex, rgb, el) {
+				FC_font_colors[colorIndex] = [rgb.r, rgb.g, rgb.b];
+				jQuery('#FC_font_color_'+colorIndex+'_div').css('backgroundColor', 'rgb('+rgb.r+', '+rgb.g+', '+rgb.b+')');
+				jQuery(el).ColorPickerHide();
+			},
+			onBeforeShow: function () {
+				jQuery(this).ColorPickerSetColor({r: FC_font_colors[colorIndex][0], g: FC_font_colors[colorIndex][1], b: FC_font_colors[colorIndex][2]});
+			}
+		});
+
+		jQuery('#FC_font_color_'+colorIndex+'_div').css('backgroundColor', 'rgb('+FC_font_colors[colorIndex][0]+', '+FC_font_colors[colorIndex][1]+', '+FC_font_colors[colorIndex][2]+')');
+	}
+	
+	function FC_add_bg_color(colorIndex) {
+		jQuery('#FC-bg-colors-div').append(
+			'<div id="FC_bg_color_'+colorIndex+'_div" class="FC_bg_color_div" style="width: 90px;height: 30px;float: left;margin: 5px;">&nbsp;</div>'
+			+'<input name="FC_delete_bg_color" class="FC_delete_bg_color" type="checkbox" value="'+colorIndex+'" style="margin: 5px 0px 0px -95px;float: left;" />'
+		);
+
+		jQuery('#FC_bg_color_'+colorIndex+'_div').ColorPicker({
+			onSubmit: function(hsb, hex, rgb, el) {
+				FC_bg_colors[colorIndex] = [rgb.r, rgb.g, rgb.b];
+				jQuery('#FC_bg_color_'+colorIndex+'_div').css('backgroundColor', 'rgb('+rgb.r+', '+rgb.g+', '+rgb.b+')');
+				jQuery(el).ColorPickerHide();
+			},
+			onBeforeShow: function () {
+				jQuery(this).ColorPickerSetColor({r: FC_bg_colors[colorIndex][0], g: FC_bg_colors[colorIndex][1], b: FC_bg_colors[colorIndex][2]});
+			}
+		});
+
+		jQuery('#FC_bg_color_'+colorIndex+'_div').css('backgroundColor', 'rgb('+FC_bg_colors[colorIndex][0]+', '+FC_bg_colors[colorIndex][1]+', '+FC_bg_colors[colorIndex][2]+')');
+	}
+	
+	function FC_add_color_pickers() {
+		for(var i=0; i<FC_font_colors.length; i++) {
+			FC_add_font_color(i);
+		}
+
+		for(var i=0; i<FC_bg_colors.length; i++) {
+			FC_add_bg_color(i);
+		}
+
+	}
+
+	function FC_add_listeners() {
+		jQuery('#FC_background_type').change(function() {
+			if (jQuery(this).val() == 'gradient') {
+				jQuery('#gradient_settings').css('display', '');
+				jQuery('#random_shape_settings').css('display', 'none');
+
+			} else if (jQuery(this).val() == 'random_shape') {
+				jQuery('#gradient_settings').css('display', 'none');
+				jQuery('#random_shape_settings').css('display', '');
+			}
+		});
+		jQuery('#FC_background_type').change();
+	}
+	
+
 	jQuery(function() {
-		add_color_pickers();
+		FC_add_color_pickers();
+		FC_add_listeners();
 	});
 </script>

@@ -8,6 +8,7 @@ class FlexibleCaptcha {
 	var $absPath;
 	var $urlPath;
 	var $nonce;
+	var $captchaDisplayed=0;
 
 	public function __construct($absPath, $urlPath) {
 		$this->absPath = $absPath;
@@ -36,23 +37,46 @@ class FlexibleCaptcha {
 		if (get_option('FC_default_width') == '') {
 			update_option('FC_default_width', 100);
 		}
+		
 		if (get_option('FC_default_height') == '') {
 			update_option('FC_default_height', 30);
 		}
+		
 		if (get_option('FC_random_font_count') == '') {
 			update_option('FC_random_font_count', 2);
 		}
-		if (get_option('FC_font_color') == '') {
-			update_option('FC_font_color', array(246, 247, 239));
+		
+		if (get_option('FC_font_color') != '' && get_option('FC_font_colors') == '') {
+			update_option('FC_font_colors', array(get_option('FC_font_color')));
+			delete_option('FC_font_color');
+		} else if (get_option('FC_font_colors') == '') {
+			update_option('FC_font_colors', array(array(246, 247, 239)));
 		}
-		if (get_option('FC_grad_color_1') == '') {
-			update_option('FC_grad_color_1', array(3, 19, 161));
+		
+		if (get_option('FC_grad_color_1') != '' && get_option('FC_bg_colors') == '') {
+			$bgColors = array(get_option('FC_grad_color_1'));
+			delete_option('FC_grad_color_1');
+			if (get_option('FC_grad_color_2') != '') {
+				$bgColors[] = get_option('FC_grad_color_2');
+				delete_option('FC_grad_color_2');
+			}
+			update_option('FC_bg_colors', $bgColors);
+			delete_option('FC_grad_color_1');
+		} else if (get_option('FC_bg_colors') == '') {
+			update_option('FC_bg_colors', array(array(3, 19, 161), array(245, 12, 12)));
 		}
-		if (get_option('FC_grad_color_2') == '') {
-			update_option('FC_grad_color_2', array(245, 12, 12));
-		}
+		
 		if (get_option('FC_gradient_transitions') == '') {
 			update_option('FC_gradient_transitions', 5);
+		}
+		if (get_option('FC_background_type') == '') {
+			update_option('FC_background_type', 'gradient');
+		}
+		if (get_option('FC_section_count') == '') {
+			update_option('FC_section_count', 10);
+		}
+		if (get_option('FC_shape_count') == '') {
+			update_option('FC_shape_count', 100);
 		}
 		if (get_option('FC_case_sensitive') == '') {
 			update_option('FC_case_sensitive', 0);
@@ -88,10 +112,12 @@ class FlexibleCaptcha {
 			delete_option('FC_default_width');
 			delete_option('FC_default_height');
 			delete_option('FC_random_font_count');
-			delete_option('FC_font_color');
-			delete_option('FC_grad_color_1');
-			delete_option('FC_grad_color_2');
+			delete_option('FC_font_colors');
+			delete_option('FC_bg_colors');
 			delete_option('FC_gradient_transitions');
+			delete_option('FC_background_type');
+			delete_option('FC_shape_count');
+			delete_option('FC_section_count');
 			delete_option('FC_case_sensitive');
 			delete_option('FC_add_to_registration');
 			delete_option('FC_add_to_comments');
@@ -191,6 +217,26 @@ class FlexibleCaptcha {
 			.FC-options-container {
 				margin: 10px 10px 30px;
 			}
+			#FC-general-settings-div label {
+				margin-right: 5px;
+				font-weight: bold;
+			}
+			#FC-general-settings-div input, #FC-general-settings-div select {
+				margin-bottom: 10px;
+			}
+
+			.FC_note {
+				font-style: italic;
+				font-size: 11px;
+				line-height: 13px;
+				color: #999;
+				padding: 5px 0px;
+			}
+			
+			#FC-general-settings-div .FC_note {
+				margin-top: -10px;
+				margin-bottom: 10px;
+			}
 		</style>
 		<?php
 	}
@@ -277,7 +323,7 @@ class FlexibleCaptcha {
 		$this->set_fonts($randomFonts);
 		
 		$this->image = @imagecreatetruecolor($this->dimensions['width'], $this->dimensions['height']);
-		$this->gen_gradient($this->image, 0, 0);
+		$this->gen_bg(0, 0);
 		#$backgroundColor = @imagecolorallocate($this->image, 0, 0, 0);
 		#imageloadfont();
 		if ($this->gen_string()) {
@@ -327,12 +373,7 @@ class FlexibleCaptcha {
 		}
 		$count=0;
 		$this->string="";
-		$fontColor = get_option('FC_font_color');
-		if (!is_array($fontColor) || !is_numeric($fontColor[0]) || !is_numeric($fontColor[1]) || !is_numeric($fontColor[2])) {
-			$fontColor = array(147, 149, 152);
-		}
-		
-		$textColor = @imagecolorallocate($this->image, $fontColor[0], $fontColor[1], $fontColor[2]);
+		$fontColor = get_option('FC_font_colors');
 		while ($count < (int)($this->dimensions['width'] / 16)) {
 			$char="";
 			switch(mt_rand()&5) {
@@ -353,6 +394,9 @@ class FlexibleCaptcha {
 					$char .= mt_rand(2,9);
 					break;
 			}
+			$colorSlot = mt_rand(0,sizeOf($fontColor)-1);
+		
+			$textColor = @imagecolorallocate($this->image, $fontColor[$colorSlot][0], $fontColor[$colorSlot][1], $fontColor[$colorSlot][2]);
 			imagettftext($this->image, mt_rand(13,16), 0, ($count*16), mt_rand(16, $this->dimensions['height']), $textColor, $this->fonts[mt_rand()&sizeof($this->fonts)-1], $char);
 			$this->string .= $char;
 			$count++;
@@ -366,58 +410,62 @@ class FlexibleCaptcha {
 	}
 
 
-
-
-	public function set_gradient_colors() {
-		$gradColor1 = get_option('FC_grad_color_1');
-		$gradColor2 = get_option('FC_grad_color_2');
-		if (!is_array($gradColor1) || !is_numeric($gradColor1[0]) || !is_numeric($gradColor1[1]) || !is_numeric($gradColor1[2])) {
-			$gradColor1 = array(30,144,255);
-		}
-
-		if (!is_array($gradColor2) || !is_numeric($gradColor2[0]) || !is_numeric($gradColor2[1]) || !is_numeric($gradColor2[2])) {
-			$gradColor2 = array(255, 0, 0);
-		}
-
-		switch (mt_rand(1,4)) {
-			case 1:
-			case 4:
-				$this->gradientColors[0] = $gradColor1;
-				$this->gradientColors[1] = $gradColor2;
-				break;
-			case 2:
-			case 3:
-				$this->gradientColors[0] = $gradColor2;
-				$this->gradientColors[1] = $gradColor1;
-				break;
+	public function set_bg_colors() {
+		$this->bgColors = array();
+		$bgColors = get_option('FC_bg_colors');
+		if (is_array($bgColors)) {
+			foreach($bgColors as $color) {
+				if (sizeof($color) == 3 && is_numeric($color[0]) && is_numeric($color[1]) && is_numeric($color[2])) {
+					$this->bgColors[] = $color;
+				}
+			}
 		}
 	}
 
-	public function gen_gradient($im, $x1, $y1) {
-		$this->set_gradient_colors();
-		$gradientTrans = (is_numeric(get_option('FC_gradient_transitions')))? get_option('FC_gradient_transitions') : 5;
-		for($x=0;$x<$gradientTrans;$x++) {
-			$color0=($this->gradientColors[0][0]-$this->gradientColors[1][0])/$this->dimensions['width'];
-			$color1=($this->gradientColors[0][1]-$this->gradientColors[1][1])/$this->dimensions['width'];
-			$color2=($this->gradientColors[0][2]-$this->gradientColors[1][2])/$this->dimensions['width'];
-			if ($x%2) {
-				for ($i=0;$i<=$this->dimensions['width']/$gradientTrans;$i++)
-				{
-					$red=$this->gradientColors[0][0]-floor($i*$color0*$gradientTrans);
-					$green=$this->gradientColors[0][1]-floor($i*$color1*$gradientTrans);
-					$blue=$this->gradientColors[0][2]-floor($i*$color2*$gradientTrans);
-					$col= imagecolorallocate($im, $red, $green, $blue);
-					imageline($im, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1+$this->dimensions['height'], $col);
+	public function gen_bg($x1, $y1) {
+		$this->set_bg_colors();
+		if (get_option('FC_background_type') == 'random_shape') {
+			$shapeCount = (is_numeric(get_option('FC_shape_count')))? get_option('FC_shape_count') : 100;
+			$sectionCount = (is_numeric(get_option('FC_section_count')))? get_option('FC_section_count') : 10;
+			$colorSlot = mt_rand(0,sizeOf($this->bgColors)-1);
+			$shapeColor = imagecolorallocate($this->image, $this->bgColors[$colorSlot][0], $this->bgColors[$colorSlot][1], $this->bgColors[$colorSlot][2]);
+			imagefill($this->image, 0, 0, $shapeColor);
+			
+			for ($i=0; $i<$shapeCount; $i++) {
+				$coords = array();
+				$randomSpot = mt_rand(0,$sectionCount-1);
+				$sectionWidth = $this->dimensions['width']/$sectionCount;
+				$widthRange = array($sectionWidth*$randomSpot,$sectionWidth*$randomSpot+$sectionWidth);
+
+				$randomSpot = mt_rand(0,$sectionCount-1);
+				$sectionHeight = $this->dimensions['height']/$sectionCount;
+				$heightRange = array($sectionHeight*$randomSpot,$sectionHeight*$randomSpot+$sectionHeight);
+				for ($x=mt_rand(5,15); $x>0; $x--) {
+					$coords[] = mt_rand($widthRange[0],$widthRange[1]);
+					$coords[] = mt_rand($heightRange[0],$heightRange[1]);
 				}
-			} else {
-				for ($i=0;$i<=$this->dimensions['width']/$gradientTrans;$i++)
-				{
-					$red=$this->gradientColors[1][0]+floor($i*$color0*$gradientTrans);
-					$green=$this->gradientColors[1][1]+floor($i*$color1*$gradientTrans);
-					$blue=$this->gradientColors[1][2]+floor($i*$color2*$gradientTrans);
-					$col= imagecolorallocate($im, $red, $green, $blue);
-					imageline($im, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1+$this->dimensions['height'], $col);
+				$colorSlot = mt_rand(0,sizeOf($this->bgColors)-1);
+				$shapeColor = imagecolorallocate($this->image, $this->bgColors[$colorSlot][0], $this->bgColors[$colorSlot][1], $this->bgColors[$colorSlot][2]);
+				imagefilledpolygon ( $this->image , $coords, sizeof($coords)/2, $shapeColor );
+			}
+		} else {
+			$gradientTrans = (is_numeric(get_option('FC_gradient_transitions')))? get_option('FC_gradient_transitions') : 5;
+			for($x=0;$x<$gradientTrans;$x++) {
+				$colorSlot = mt_rand(0,sizeOf($this->bgColors)-1);
+				while(sizeof($this->bgColors) > 1 && $colorSlot == $lastColorSlot) {
+					$colorSlot = mt_rand(0,sizeOf($this->bgColors)-1);
 				}
+				$color0=($this->bgColors[$lastColorSlot][0]-$this->bgColors[$colorSlot][0])/$this->dimensions['width'];
+				$color1=($this->bgColors[$lastColorSlot][1]-$this->bgColors[$colorSlot][1])/$this->dimensions['width'];
+				$color2=($this->bgColors[$lastColorSlot][2]-$this->bgColors[$colorSlot][2])/$this->dimensions['width'];
+				for ($i=0;$i<=$this->dimensions['width']/$gradientTrans;$i++) {
+					$red=$this->bgColors[$lastColorSlot][0]-floor($i*$color0*$gradientTrans);
+					$green=$this->bgColors[$lastColorSlot][1]-floor($i*$color1*$gradientTrans);
+					$blue=$this->bgColors[$lastColorSlot][2]-floor($i*$color2*$gradientTrans);
+					$col= imagecolorallocate($this->image, $red, $green, $blue);
+					imageline($this->image, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1, $x1+($this->dimensions['width']/$gradientTrans*$x)+$i, $y1+$this->dimensions['height'], $col);
+				}
+				$lastColorSlot = $colorSlot;
 			}
 		}
 	}
@@ -481,6 +529,18 @@ class FlexibleCaptcha {
 				update_option('FC_random_font_count', $_POST['FC_random_font_count']);
 			}
 			
+			if (isset($_POST['FC_background_type'])) {
+				update_option('FC_background_type', $_POST['FC_background_type']);
+			}
+			
+			if (is_numeric($_POST['FC_section_count']) && $_POST['FC_section_count'] < 100) {
+				update_option('FC_section_count', $_POST['FC_section_count']);
+			}
+			
+			if (is_numeric($_POST['FC_shape_count'])) {
+				update_option('FC_shape_count', $_POST['FC_shape_count']);
+			}
+			
 			if (is_numeric($_POST['FC_gradient_transitions']) && $_POST['FC_gradient_transitions'] < 100) {
 				update_option('FC_gradient_transitions', $_POST['FC_gradient_transitions']);
 			}
@@ -523,18 +583,26 @@ class FlexibleCaptcha {
 
 
 			##Set font_color
-			if (is_array($_POST['FC_font_color']) && is_numeric($_POST['FC_font_color'][0]) && is_numeric($_POST['FC_font_color'][1]) && is_numeric($_POST['FC_font_color'][2])) {
-				update_option('FC_font_color', $_POST['FC_font_color']);
+			if (is_array($_POST['FC_font_colors'])) {
+				$colors = array();
+				foreach($_POST['FC_font_colors'] as $key=>$color) {
+					if (sizeof($color) == 3 && is_numeric($color[0]) && is_numeric($color[1]) && is_numeric($color[2])) {
+						$colors[] = $color;
+					}
+				}
+				update_option('FC_font_colors', $colors);
 			}
 			
-			if (is_array($_POST['FC_grad_color_1']) && is_numeric($_POST['FC_grad_color_1'][0]) && is_numeric($_POST['FC_grad_color_1'][1]) && is_numeric($_POST['FC_grad_color_1'][2])) {
-				update_option('FC_grad_color_1', $_POST['FC_grad_color_1']);
+			if (is_array($_POST['FC_bg_colors'])) {
+				$colors = array();
+				foreach($_POST['FC_bg_colors'] as $key=>$color) {
+					if (sizeof($color) == 3 && is_numeric($color[0]) && is_numeric($color[1]) && is_numeric($color[2])) {
+						$colors[] = $color;
+					}
+				}
+				update_option('FC_bg_colors', $colors);
 			}
 
-			if (is_array($_POST['FC_grad_color_2']) && is_numeric($_POST['FC_grad_color_2'][0]) && is_numeric($_POST['FC_grad_color_2'][1]) && is_numeric($_POST['FC_grad_color_2'][2])) {
-				update_option('FC_grad_color_2', $_POST['FC_grad_color_2']);
-			}
-			
 			print "Settings successfully saved.";
 		}
 		die();
@@ -553,8 +621,16 @@ class FlexibleCaptcha {
 	}
 
 	function add_to_login_form() {
-		if (get_option('FC_add_to_login') == 1) {
+		if (get_option('FC_add_to_login') == 1 && $captchaDisplayed == 0) {
 			print $this->get_captcha_fields_display(get_option('FC_default_width'), get_option('FC_default_height'));
+			$this->captchaDisplayed = 1;
+		}
+	}
+
+	function add_to_login_form_bottom() {
+		if (get_option('FC_add_to_login') == 1 && $captchaDisplayed == 0) {
+			$this->captchaDisplayed = 1;
+			return $this->get_captcha_fields_display(get_option('FC_default_width'), get_option('FC_default_height'));
 		}
 	}
 	

@@ -21,6 +21,6 @@
   <input type="text" name="FC_captcha_input" id="FC_captcha_input_<?php print $uniqueFieldID; ?>" value="" />
   <input type="hidden" name="FC_captcha_unique_id" id="FC_captcha_unique_id_<?php print $uniqueFieldID; ?>" value="<?php print $uniqueFieldID; ?>" />
 </div>
-<div id="FC_captcha_image_container_<?php print $uniqueFieldID; ?>">
+<div id="FC_captcha_image_container_<?php print $uniqueFieldID; ?>" class="FC_captcha_image_container">
   <img id="FC_captcha_image_<?php print $uniqueFieldID; ?>" width="<?php print $width; ?>" height="<?php print $height; ?>" src="<?php print home_url(); ?>?FC_captcha_request=<?php print $requestKey; ?>&rs=<?php print time(); ?>&cwidth=<?php print $width; ?>&cheight=<?php print $height; ?>&uniqueID=<?php print $uniqueFieldID; ?>" />&nbsp;<img class="FC_image_refresh" id="FC_image_refresh_<?php print $uniqueFieldID; ?>" src="<?php print $this->urlPath; ?>/images/arrows_refresh.png" />
 </div>
