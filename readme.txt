@@ -4,7 +4,7 @@ Donate link:
 Tags: Flexible Captcha
 Requires at least: 3.1
 Tested up to: 3.9.2
-Stable tag: 2.0
+Stable tag: 2.0.1
 
 This plugin allows you to create image captcha for any form.  
 It has a shortcode that can be placed on any page and a simple function call that will validate the captcha for you if you are using a custom form.  It can automatically be included on the comment, registration, and log in forms.
@@ -50,6 +50,9 @@ A. You need to handle the form submission.  Its up to you to figure out how to d
 
 == Changelog ==
 
+= 2.0.1 =
+Fixed activation problem on multi site installs.
+
 = 2.0 =
 Added abaility to add multiple colors for fonts and background.
 Added new background type random shapes
@@ -85,7 +88,5 @@ Initial version.
 
 == Upgrade Notice ==
 
-= 2.0 =
-Added abaility to add multiple colors for fonts and background.
-Added new background type random shapes
-Fixed a bug where captcha was not appearing for logged in users.
+= 2.0.1 =
+Fixed activation problem on multi site installs.

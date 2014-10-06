@@ -18,6 +18,9 @@ class FlexibleCaptcha {
 			$uploadDir = wp_upload_dir();
 			$this->fontDirectory = $uploadDir['basedir'] . "/fc-fonts/";
 		}
+		if (get_option('FC_font_color') != '' && get_option('FC_grad_color_1') != '') {
+			$this->activate();
+		}
 	}
 	
 	function activate() {
