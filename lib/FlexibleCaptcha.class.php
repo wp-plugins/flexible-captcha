@@ -353,7 +353,7 @@ class FlexibleCaptcha {
 		if (isset($_COOKIE['FC_captcha_key']) && is_array($_COOKIE['FC_captcha_key'])) {
 			$count = 0;
 			if (isset($_COOKIE['FC_captcha_key'][$uniqueID])) {
-				$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+				$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val=%s";
 				$result = $wpdb->query($wpdb->prepare($deleteQuery, $_COOKIE['FC_captcha_key'][$uniqueID]));
 				unset($_COOKIE['FC_captcha_key'][$uniqueID]);
 			}
@@ -365,7 +365,7 @@ class FlexibleCaptcha {
 					if (preg_match('/^[a-f0-9]{32}$/', $oldCookieVal)) {
 						$oldCookieIndex = key($_COOKIE['FC_captcha_key']);
 						$tmp = array_shift($_COOKIE['FC_captcha_key']);
-						$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+						$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val=%s";
 						$result = $wpdb->query($wpdb->prepare($deleteQuery, $oldCookieVal));
 						if ($uniqueID != $oldCookieIndex) {
 							setcookie('FC_captcha_key['.$oldCookieIndex.']', 0, time()-3600);
@@ -484,16 +484,16 @@ class FlexibleCaptcha {
 		isset($_REQUEST['FC_captcha_unique_id']) && preg_match('/^[a-f0-9]{32}$/', $_REQUEST['FC_captcha_unique_id']) &&
 		isset($_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']]) && preg_match('/^[a-f0-9]{32}$/', $_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']])) {
 			if ($caseSensitive == 1) {
-				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY '%s' AND captcha LIKE BINARY '%s'";
+				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY %s AND captcha LIKE BINARY %s";
 			} else {
-				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY '%s' AND captcha='%s'";
+				$sql = "SELECT COUNT(*) FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val LIKE BINARY %s AND captcha=%s";
 			}
 			
 			$captchaKey = $_COOKIE['FC_captcha_key'][$_REQUEST['FC_captcha_unique_id']];
 			if ($wpdb->get_var($wpdb->prepare($sql, $captchaKey, $_REQUEST['FC_captcha_input'])) == 1) {
 				$returnVal = true;
 			}
-			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val='%s'";
+			$deleteQuery = "DELETE FROM ".$wpdb->prefix."FC_captcha_store WHERE cookie_val=%s";
 			$result = $wpdb->query($wpdb->prepare($deleteQuery, $captchaKey));
 		}
 		return $returnVal;
